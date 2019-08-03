@@ -2,49 +2,72 @@ package com.stylefeng.guns.rest.modular.vo;
 
 import lombok.Data;
 
+
+/**
+ * 用户登录的相应体（参照接口文档）
+ */
 @Data
 public class ResponseVO<M> {
-    // 返回状态【0-成功，1-业务失败，999-表示系统异常】
-    private int status;
-    // 返回信息
-    private String msg;
-    // 返回数据实体;
-    private M data;
 
+    private int status; //返回状态
+    private String msg; //信息
+    private M data; //实体数据
 
-    private ResponseVO(){}
-
-
-    public static<M> ResponseVO success(M m){
-        ResponseVO responseVO = new ResponseVO();
-        responseVO.setStatus(0);
-        responseVO.setData(m);
-
-        return responseVO;
+    //响应成功
+    public static<M> ResponseVO success(M data){
+        ResponseVO vo = new ResponseVO();
+        vo.setData(data);
+        vo.setStatus(0);
+        return vo;
     }
 
-    public static<M> ResponseVO success(String msg){
-        ResponseVO responseVO = new ResponseVO();
-        responseVO.setStatus(0);
-        responseVO.setMsg(msg);
-
-        return responseVO;
+    //响应成功后返回提示
+    public static ResponseVO success(String msg){
+        ResponseVO vo = new ResponseVO();
+        vo.setMsg(msg);
+        vo.setStatus(0);
+        return vo;
     }
 
-    public static<M> ResponseVO serviceFail(String msg){
-        ResponseVO responseVO = new ResponseVO();
-        responseVO.setStatus(1);
-        responseVO.setMsg(msg);
-
-        return responseVO;
+    //业务异常
+    public static ResponseVO serviceFail(String msg){
+        ResponseVO vo = new ResponseVO();
+        vo.setMsg(msg);
+        vo.setStatus(1);
+        return vo;
     }
 
-    public static<M> ResponseVO appFail(String msg){
-        ResponseVO responseVO = new ResponseVO();
-        responseVO.setStatus(999);
-        responseVO.setMsg(msg);
-
-        return responseVO;
+    //系统异常
+    public static ResponseVO appFail(String msg){
+        ResponseVO vo = new ResponseVO();
+        vo.setMsg(msg);
+        vo.setStatus(999);
+        return vo;
     }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public void setMsg(String msg) {
+        this.msg = msg;
+    }
+
+    public M getData() {
+        return data;
+    }
+
+    public void setData(M data) {
+        this.data = data;
+    }
+
 
 }

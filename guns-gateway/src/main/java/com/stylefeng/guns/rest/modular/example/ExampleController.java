@@ -19,10 +19,7 @@ public class ExampleController {
 
     @RequestMapping("")
     public ResponseEntity hello() {
-        //System.out.println(simpleObject.getUser());
-
         System.out.println(CurrentUser.getCurrentUser());
-
-        return ResponseEntity.ok("请求成功!");
+        return ResponseEntity.ok("用户存在");
     }
 }

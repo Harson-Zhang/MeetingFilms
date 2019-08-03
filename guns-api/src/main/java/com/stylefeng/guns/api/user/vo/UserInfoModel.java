@@ -11,7 +11,7 @@ public class UserInfoModel implements Serializable{
     private String phone;
     private int sex;
     private String birthday;
-    private String lifeState;
+    private int lifeState;
     private String biography;
     private String address;
     private String headAddress;
@@ -75,11 +75,11 @@ public class UserInfoModel implements Serializable{
         this.birthday = birthday;
     }
 
-    public String getLifeState() {
+    public int getLifeState() {
         return lifeState;
     }
 
-    public void setLifeState(String lifeState) {
+    public void setLifeState(int lifeState) {
         this.lifeState = lifeState;
     }
 

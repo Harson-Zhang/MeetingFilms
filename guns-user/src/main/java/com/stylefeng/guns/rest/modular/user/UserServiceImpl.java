@@ -2,6 +2,7 @@ package com.stylefeng.guns.rest.modular.user;
 
 import com.alibaba.dubbo.config.annotation.Service;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
+import com.baomidou.mybatisplus.mapper.Wrapper;
 import com.stylefeng.guns.api.user.UserAPI;
 import com.stylefeng.guns.api.user.vo.UserInfoModel;
 import com.stylefeng.guns.api.user.vo.UserModel;
@@ -63,14 +64,11 @@ public class UserServiceImpl implements UserAPI{
 
     @Override
     public boolean checkUsername(String username) {
-        EntityWrapper<MoocUserT> entityWrapper = new EntityWrapper<>();
-        entityWrapper.eq("user_name",username);
-        Integer result = moocUserTMapper.selectCount(entityWrapper);
-        if(result!=null && result>0){
-            return false;
-        }else{
-            return true;
-        }
+        Wrapper<MoocUserT> wrapper = new EntityWrapper<>();
+        wrapper.eq("user_name", username);
+
+        Integer count = moocUserTMapper.selectCount(wrapper);
+        return count == null || count == 0;  //不存在该用户，则当前username可用，返回true
     }
 
     private UserInfoModel do2UserInfo(MoocUserT moocUserT){
@@ -83,7 +81,7 @@ public class UserServiceImpl implements UserAPI{
         userInfoModel.setEmail(moocUserT.getEmail());
         userInfoModel.setUsername(moocUserT.getUserName());
         userInfoModel.setNickname(moocUserT.getNickName());
-        userInfoModel.setLifeState(""+moocUserT.getLifeState());
+        userInfoModel.setLifeState(moocUserT.getLifeState());
         userInfoModel.setBirthday(moocUserT.getBirthday());
         userInfoModel.setAddress(moocUserT.getAddress());
         userInfoModel.setSex(moocUserT.getUserSex());
@@ -109,7 +107,7 @@ public class UserServiceImpl implements UserAPI{
         MoocUserT moocUserT = new MoocUserT();
         moocUserT.setUuid(userInfoModel.getUuid());
         moocUserT.setNickName(userInfoModel.getNickname());
-        moocUserT.setLifeState(Integer.parseInt(userInfoModel.getLifeState()));
+        moocUserT.setLifeState(userInfoModel.getLifeState());
         moocUserT.setBirthday(userInfoModel.getBirthday());
         moocUserT.setBiography(userInfoModel.getBiography());
         moocUserT.setBeginTime(null);
@@ -131,6 +129,4 @@ public class UserServiceImpl implements UserAPI{
             return null;
         }
     }
-
-
 }

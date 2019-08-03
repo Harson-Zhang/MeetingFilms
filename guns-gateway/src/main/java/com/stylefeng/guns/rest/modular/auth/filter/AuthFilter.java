@@ -8,6 +8,7 @@ import com.stylefeng.guns.rest.config.properties.JwtProperties;
 import com.stylefeng.guns.rest.modular.auth.util.JwtTokenUtil;
 import com.stylefeng.guns.rest.modular.vo.ResponseVO;
 import io.jsonwebtoken.JwtException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,21 +38,24 @@ public class AuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+        //登录（或者叫验证）的请求，要放行让他登录
         if (request.getServletPath().equals("/" + jwtProperties.getAuthPath())) {
             chain.doFilter(request, response);
             return;
         }
 
         // 配置忽略列表
-        String ignoreUrl = jwtProperties.getIgnoreUrl();
-        String[] ignoreUrls = ignoreUrl.split(",");
-        for(int i=0;i<ignoreUrls.length;i++){
-            if(request.getServletPath().equals(ignoreUrls[i])){
-                chain.doFilter(request, response);
-                return;
+        String urlStr = jwtProperties.getIgnoreUrl();
+        if (StringUtils.isNotEmpty(urlStr)){
+            String [] urlList = urlStr.split(",");
+            String servletPath = request.getServletPath();  //servletPath是除了项目名称(contextPath)外的uri
+            for (String url:urlList){
+                if (url.equals(servletPath)){  //Harson: getServletPath能获取到第几个/为止
+                    chain.doFilter(request,response);
+                    return;
+                }
             }
         }
-
 
         final String requestHeader = request.getHeader(jwtProperties.getHeader());
         String authToken = null;
@@ -62,7 +66,7 @@ public class AuthFilter extends OncePerRequestFilter {
             if(userId == null){
                 return;
             } else {
-                CurrentUser.saveUserId(userId);
+                CurrentUser.saveUserId(userId); //Harson: 如果后续判断中有error，也会直接return，当前线程会挂的。这样写应该也行，但最好写后面去
             }
 
             //验证token是否过期,包含了验证jwt是否正确

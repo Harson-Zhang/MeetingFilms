@@ -6,9 +6,14 @@ import com.stylefeng.guns.api.user.vo.UserInfoModel;
 import com.stylefeng.guns.api.user.vo.UserModel;
 import com.stylefeng.guns.rest.common.CurrentUser;
 import com.stylefeng.guns.rest.modular.vo.ResponseVO;
+import com.sun.javafx.collections.MappingChange;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RequestMapping("/user/")
 @RestController
@@ -20,18 +25,23 @@ public class UserController {
 
     @RequestMapping(value="register",method = RequestMethod.POST)
     public ResponseVO register(UserModel userModel){
-        if(userModel.getUsername() == null || userModel.getUsername().trim().length()==0){
-            return ResponseVO.serviceFail("用户名不能为空");
-        }
-        if(userModel.getPassword() == null || userModel.getPassword().trim().length()==0){
-            return ResponseVO.serviceFail("密码不能为空");
-        }
+        // 在Controller层进行非法数据的判断
+        String username = userModel.getUsername();
+        String password = userModel.getPassword();
 
-        boolean isSuccess = userAPI.register(userModel);
-        if(isSuccess){
-            return ResponseVO.success("注册成功");
-        }else{
-            return ResponseVO.serviceFail("注册失败");
+        if(username==null || username.trim().length()==0){
+            return ResponseVO.serviceFail("用户名不能为空！");
+        }else if(password==null || password.trim().length()==0){
+            return ResponseVO.serviceFail("密码不能为空！");
+        }
+        if (!userAPI.checkUsername(username)){
+            return ResponseVO.serviceFail("用户名已存在");
+        }
+        boolean registerSucceed = userAPI.register(userModel);
+        if (registerSucceed){
+            return ResponseVO.success("恭喜注册成功");
+        } else {
+            return ResponseVO.serviceFail("用户注册失败");
         }
     }
 
@@ -56,13 +66,16 @@ public class UserController {
         /*
             应用：
                 1、前端存储JWT 【七天】 ： JWT的刷新
-                2、服务器端会存储活动用户信息【30分钟】
+                2、服务器端会存储活动用户信息【30分钟】  —— 30分钟后，即使你持有jwt也无法登陆（除非设置自动登录）
                 3、JWT里的userId为key，查找活跃用户
+                注：有时修改过密码，前端token未刷新，这是无法通过验证的。这种情况要考虑到。
             退出：
                 1、前端删除掉JWT
                 2、后端服务器删除活跃用户缓存
             现状：
-                1、前端删除掉JWT
+                1、前端删除掉JWT，就一定没法通过验证了（正式环境下别这么做）
+            Harson:
+                后期记得用redis实现以下
          */
 
 
