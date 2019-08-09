@@ -19,4 +19,12 @@
         <result column="film_status" property="filmStatus" />
     </resultMap>
 
+    <select id="getFilmDetailsById" parameterType="java.lang.Integer" resultType="com.stylefeng.guns.api.film.vo.FilmDetailVO">
+
+    </select>
+
+    <select id="getFilmDetailsByName" parameterType="java.lang.String" resultType="com.stylefeng.guns.api.film.vo.FilmDetailVO">
+
+    </select>
+
 </mapper>

@@ -1,8 +1,6 @@
 package com.stylefeng.guns.api.film;
 
-import com.stylefeng.guns.api.film.vo.BannerVo;
-import com.stylefeng.guns.api.film.vo.FilmInfoVo;
-import com.stylefeng.guns.api.film.vo.FilmVo;
+import com.stylefeng.guns.api.film.vo.*;
 
 import java.util.List;
 
@@ -47,4 +45,38 @@ public interface FilmServiceAPI {
      * @return 前100个电影的信息
      */
     List<FilmInfoVo> getTop();
+
+    /**
+     * 获取类型列表
+     * @return
+     */
+    List<CatVO> getCats();
+
+    /**
+     * 获取片源列表
+     * @return
+     */
+    List<SourceVO> getSources();
+
+    /**
+     * 获取年代列表
+     * @return
+     */
+    List<YearVO> getYears();
+
+    /**
+     * 获取正在热映/即将上映/经典电影的电影（filmStatus判断， 条件查询）
+
+     * @return 电影s
+     */
+    FilmVo getHotFilms(int filmStatus, int sortId, int catId, int sourceId, int yearId, int nowPage, int pageSize);
+
+    /**
+     * 获取电影详情
+     * @param searchType
+     * @param searchParam
+     * @return
+     */
+    FilmDetailVO getFilmDetails(int searchType, String searchParam);
+
 }
