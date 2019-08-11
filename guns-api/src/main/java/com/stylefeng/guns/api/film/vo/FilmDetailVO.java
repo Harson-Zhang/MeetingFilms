@@ -8,12 +8,14 @@ import java.io.Serializable;
 public class FilmDetailVO implements Serializable {
     private String filmName;
     private String filmEnName;
-    private String imgAddress ;
-    private String score ;
-    private String scoreNum ;
-    private String totalBox ;
-    private String info01 ;
-    private String info02 ;
-    private String info03 ;
-
+    private String imgAddress;
+    private String score;
+    private String scoreNum;
+    private String totalBox;
+    private String info01;
+    private String info02;
+    private String info03;
+    private Info04VO info04;
+    private ImgsVO imgs;
+    private String filmId;
 }

@@ -46,4 +46,4 @@ logging:
   level.root: info
   level.com.stylefeng: debug
   path: logs/
-  file: meetingfilm-user.log
+  file: meetingfilm-film.log

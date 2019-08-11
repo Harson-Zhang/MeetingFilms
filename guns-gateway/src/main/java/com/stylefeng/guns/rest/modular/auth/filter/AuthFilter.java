@@ -50,7 +50,7 @@ public class AuthFilter extends OncePerRequestFilter {
             String [] urlList = urlStr.split(",");
             String servletPath = request.getServletPath();  //servletPath是除了项目名称(contextPath)外的uri
             for (String url:urlList){
-                if (url.equals(servletPath)){  //Harson: getServletPath能获取到第几个/为止
+                if (servletPath.startsWith(url)){  //Harson: getServletPath能获取到第几个/为止
                     chain.doFilter(request,response);
                     return;
                 }

@@ -27,6 +27,12 @@ public class DefaultFilmServiceImpl implements FilmServiceAPI {
     MoocSourceDictTMapper moocSourceDictTMapper;
     @Autowired
     MoocYearDictTMapper moocYearDictTMapper;
+    @Autowired
+    MoocFilmInfoTMapper moocFilmInfoTMapper;
+    @Autowired
+    MoocActorTMapper moocActorTMapper;
+    @Autowired
+    MoocFilmActorTMapper moocFilmActorTMapper;
 
     /**
      * 获取轮播图信息
@@ -271,13 +277,53 @@ public class DefaultFilmServiceImpl implements FilmServiceAPI {
     @Override
     public FilmDetailVO getFilmDetails(int searchType, String searchParam) {
         // searchType: 0表示按照编号查找，1表示按照名称查找
+        FilmDetailVO filmDetailsById;
         if (searchType == 0){
-
-        } else if(searchType == 1){
-
+            filmDetailsById = moocFilmTMapper.getFilmDetailsById(Integer.parseInt(searchParam));
+        } else {
+            filmDetailsById = moocFilmTMapper.getFilmDetailsByName(searchParam);
         }
+        return filmDetailsById;
+    }
 
+    @Override
+    public String getBiography(int filmId) {
+        MoocFilmInfoT moocFilmInfoT = moocFilmInfoTMapper.selectById(filmId);
+        return moocFilmInfoT.getBiography();
+    }
 
-        return null;
+    @Override
+    public FilmActorsVO getDirectorAndActors(int filmId) {
+        FilmActorsVO filmActorsVO = new FilmActorsVO();
+        // 选出导演
+        MoocFilmInfoT moocFilmInfoT = moocFilmInfoTMapper.selectById(filmId);
+        MoocActorT moocActorT  = moocActorTMapper.selectById(moocFilmInfoT.getDirectorId());
+
+        ActorVO directorVO = new ActorVO();
+        directorVO.setDirectorName(moocActorT.getActorName());
+        directorVO.setImgAddress(moocActorT.getActorImg());
+        filmActorsVO.setDirector(directorVO);
+
+        // 选出所有演员
+        List<ActorVO> actorVOS = moocFilmActorTMapper.getActorsByFilmId(filmId);
+        filmActorsVO.setActors(actorVOS);
+
+        return filmActorsVO;
+    }
+
+    @Override
+    public ImgsVO getImgs(int filmId) {
+        MoocFilmInfoT moocFilmInfoT = moocFilmInfoTMapper.selectById(filmId);
+        String filmImgs = moocFilmInfoT.getFilmImgs();
+        String [] imgArray = filmImgs.split(",");
+
+        ImgsVO imgsVO = new ImgsVO();
+        imgsVO.setMainImg(imgArray[0]);
+        imgsVO.setImg01(imgArray[1]);
+        imgsVO.setImg02(imgArray[2]);
+        imgsVO.setImg03(imgArray[3]);
+        imgsVO.setImg04(imgArray[4]);
+
+        return imgsVO;
     }
 }

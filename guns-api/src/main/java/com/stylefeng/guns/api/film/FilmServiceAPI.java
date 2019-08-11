@@ -72,11 +72,31 @@ public interface FilmServiceAPI {
     FilmVo getHotFilms(int filmStatus, int sortId, int catId, int sourceId, int yearId, int nowPage, int pageSize);
 
     /**
-     * 获取电影详情
+     * 获取电影主体详情
      * @param searchType
      * @param searchParam
      * @return
      */
     FilmDetailVO getFilmDetails(int searchType, String searchParam);
 
+    /**
+     * 获取电影简介
+     * @param filmId
+     * @return
+     */
+    String getBiography(int filmId);
+
+    /**
+     * 获取导演演员信息
+     * @param filmId
+     * @return
+     */
+    FilmActorsVO getDirectorAndActors(int filmId);
+
+    /**
+     * 获取图集
+     * @param filmId
+     * @return
+     */
+    ImgsVO getImgs(int filmId);
 }

@@ -20,11 +20,60 @@
     </resultMap>
 
     <select id="getFilmDetailsById" parameterType="java.lang.Integer" resultType="com.stylefeng.guns.api.film.vo.FilmDetailVO">
-
+        SELECT f.`uuid` as filmId, f.`film_name` as filmName, fi.`film_en_name` as filmEnName, f.`img_address` as imgAddress,
+               f.`film_score` as score,fi.`film_score_num` as scoreNum, f.`film_box_office` as totalBox,
+               (SELECT GROUP_CONCAT(show_name SEPARATOR ',') FROM mooc_cat_dict_t cd
+                WHERE FIND_IN_SET(cd.`UUID`,(
+                  SELECT REPLACE(TRIM( BOTH '#' FROM film_cats), '#', ',')
+                  FROM mooc_film_t
+                  WHERE `uuid` = #{id})
+                 )) AS info01,
+               (SELECT CONCAT((
+                     SELECT show_name
+                     FROM mooc_source_dict_t
+                     WHERE UUID = f.`film_source`), '/', fi.`film_length`, '分钟')
+                FROM mooc_film_t f, mooc_film_info_t fi
+                WHERE f.`uuid` = #{id} AND f.`UUID` = fi.`UUID`
+                 )AS info02,
+               (SELECT CONCAT(DATE_FORMAT(f.`film_time`, '%Y-%m-%d'), ' ', (
+                   SELECT show_name
+                   FROM mooc_source_dict_t
+                   WHERE UUID = f.`film_source`
+               ), '上映')
+               FROM mooc_film_t f, mooc_film_info_t fi
+               WHERE f.`UUID` = #{id} AND f.`UUID` = fi.`UUID`
+                 ) AS info03
+        FROM mooc_film_t f, mooc_film_info_t fi
+        WHERE f.`UUID` = #{id} AND f.`UUID` = fi.`UUID`;
     </select>
 
     <select id="getFilmDetailsByName" parameterType="java.lang.String" resultType="com.stylefeng.guns.api.film.vo.FilmDetailVO">
-
+    <bind name="pattern" value="'%' + filmName + '%'" />
+        SELECT f.`uuid` as filmId, f.`film_name` as filmName, fi.`film_en_name` as filmEnName, f.`img_address` as imgAddress,
+               f.`film_score` as score,fi.`film_score_num` as scoreNum, f.`film_box_office` as totalBox,
+               (SELECT GROUP_CONCAT(show_name SEPARATOR ',') FROM mooc_cat_dict_t cd
+                WHERE FIND_IN_SET(cd.`UUID`,(
+                    SELECT REPLACE(TRIM( BOTH '#' FROM film_cats), '#', ',')
+                    FROM mooc_film_t
+                    WHERE `film_name` LIKE #{pattern})
+                    )) AS info01,
+               (SELECT CONCAT((
+                                  SELECT show_name
+                                  FROM mooc_source_dict_t
+                                  WHERE UUID = f.`film_source`), '/', fi.`film_length`, '分钟')
+                FROM mooc_film_t f, mooc_film_info_t fi
+                WHERE f.`film_name` LIKE #{pattern} AND f.`UUID` = fi.`UUID`
+               )AS info02,
+               (SELECT CONCAT(DATE_FORMAT(f.`film_time`, '%Y-%m-%d'), ' ', (
+                   SELECT show_name
+                   FROM mooc_source_dict_t
+                   WHERE UUID = f.`film_source`
+               ), '上映')
+                FROM mooc_film_t f, mooc_film_info_t fi
+                WHERE f.`film_name` LIKE #{pattern} AND f.`UUID` = fi.`UUID`
+               ) AS info03
+        FROM mooc_film_t f, mooc_film_info_t fi
+        WHERE f.`film_name` LIKE #{pattern} AND f.`UUID` = fi.`UUID`;
     </select>
 
 </mapper>

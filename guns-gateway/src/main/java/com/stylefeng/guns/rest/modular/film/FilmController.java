@@ -2,7 +2,9 @@ package com.stylefeng.guns.rest.modular.film;
 
 import com.alibaba.druid.support.json.JSONUtils;
 import com.alibaba.dubbo.config.annotation.Reference;
+import com.alibaba.dubbo.rpc.RpcContext;
 import com.stylefeng.guns.api.film.FilmServiceAPI;
+import com.stylefeng.guns.api.film.FilmServiceAsynAPI;
 import com.stylefeng.guns.api.film.vo.*;
 import com.stylefeng.guns.rest.modular.film.vo.FilmConditionVO;
 import com.stylefeng.guns.rest.modular.film.vo.FilmIndexVo;
@@ -11,6 +13,8 @@ import com.stylefeng.guns.rest.modular.vo.ResponseVO;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/film/")
@@ -19,6 +23,9 @@ public class FilmController {
 
     @Reference(interfaceClass = FilmServiceAPI.class, check = false)
     FilmServiceAPI filmServiceAPI;
+
+    @Reference(interfaceClass = FilmServiceAsynAPI.class, check = false, async = true)
+    FilmServiceAsynAPI filmServiceAsynAPI;
 
     @RequestMapping(value = "getIndex", method = RequestMethod.GET)
     public ResponseVO getIndex() {
@@ -127,13 +134,40 @@ public class FilmController {
         return ResponseVO.success(filmInfoList, filmRequestVO.getNowPage(),totalPage, IMG_PRE);
     }
 
-    //影片详情查询
+    /**
+     * 影片详情查询
+     *
+     * @param searchType
+     * @param searchParam
+     * @return
+     */
     @RequestMapping(value = "/films/{searchParam}", method = RequestMethod.GET)
-    public ResponseVO getFilmDetails(int searchType, @PathVariable("searchParam") String searchParam){
+    public ResponseVO getFilmDetails(int searchType, @PathVariable("searchParam") String searchParam) throws ExecutionException, InterruptedException {
         //获取电影信息
+        FilmDetailVO filmDetailVO = filmServiceAPI.getFilmDetails(searchType, searchParam);
+        if (filmDetailVO == null){
+            return ResponseVO.serviceFail("查询失败，无影片可加载");
+        }
 
-        //获取演员信息
+        int filmId = Integer.parseInt(filmDetailVO.getFilmId());
 
-        return null;
+        //获取导演、演员信息
+        filmServiceAsynAPI.getBiography(filmId);
+        Future<String> biographyFuture = RpcContext.getContext().getFuture();
+
+        filmServiceAsynAPI.getDirectorAndActors(filmId);
+        Future<FilmActorsVO> filmActorsFuture = RpcContext.getContext().getFuture();
+
+        //获取图集
+        filmServiceAsynAPI.getImgs(filmId);
+        Future<ImgsVO> imgsFuture = RpcContext.getContext().getFuture();
+
+        Info04VO info04VO = new Info04VO();
+        info04VO.setActors(filmActorsFuture.get());
+        info04VO.setBiography(biographyFuture.get());
+        filmDetailVO.setInfo04(info04VO);
+        filmDetailVO.setImgs(imgsFuture.get());
+
+        return ResponseVO.success(filmDetailVO, IMG_PRE);
     }
 }
