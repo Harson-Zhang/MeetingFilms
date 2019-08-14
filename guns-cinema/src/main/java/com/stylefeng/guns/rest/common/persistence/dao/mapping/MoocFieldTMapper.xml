@@ -14,4 +14,56 @@
         <result column="price" property="price" />
     </resultMap>
 
+    <resultMap id="filmInfoMap" type="com.stylefeng.guns.api.cinema.vo.FilmInfoVO">
+        <result column="film_id" property="filmId" />
+        <result column="film_name" property="filmName" />
+        <result column="film_length" property="filmLength" />
+        <result column="film_language" property="filmType" />
+        <result column="film_cats" property="filmCats" />
+        <result column="actors" property="actors" />
+        <result column="img_address" property="imgAddress" />
+        <collection property="filmFields" ofType="com.stylefeng.guns.api.cinema.vo.FilmFieldVO" >
+            <result column="UUID" property="fieldId" />
+            <result column="begin_time" property="beginTime" />
+            <result column="end_time" property="endTime" />
+            <result column="film_language" property="language" />
+            <result column="hall_name" property="hallName" />
+            <result column="price" property="price" />
+        </collection>
+    </resultMap>
+    
+    <select id="getFilmInfos" parameterType="int" resultMap="filmInfoMap">
+        SELECT
+            hf.`film_id`,
+            hf.`film_name`,
+            hf.`film_length`,
+            hf.`film_language`,
+            hf.`film_cats`,
+            hf.`actors`,
+            hf.`img_address`,
+            f.`UUID`,
+            f.`begin_time`,
+            f.`end_time`,
+            hf.`film_language`,
+            f.`hall_name`,
+            f.`price`
+        FROM
+            mooc_field_t f
+                LEFT JOIN mooc_hall_film_info_t hf
+                          ON f.film_id = hf.`film_id`
+        WHERE f.cinema_id = #{cinemaId} ;
+    </select>
+
+    <select id="getHallInfoByFieldId" parameterType="int" resultType="com.stylefeng.guns.api.cinema.vo.HallInfoVO">
+        SELECT
+            f.`UUID` AS hallFieldId,
+            hd.`show_name` AS hallName,
+            f.`price` AS price,
+            hd.`seat_address` AS seatFile
+        FROM
+            mooc_field_t f,
+            mooc_hall_dict_t hd
+        WHERE f.`hall_id` = hd.`UUID`
+          AND f.`UUID` = #{fieldId}
+    </select>
 </mapper>

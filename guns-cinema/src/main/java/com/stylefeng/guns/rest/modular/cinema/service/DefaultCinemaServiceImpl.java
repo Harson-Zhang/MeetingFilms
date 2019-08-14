@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service(interfaceClass = CinemaServiceAPI.class)
+@Service(interfaceClass = CinemaServiceAPI.class, executes = 10)
 @Component
 public class DefaultCinemaServiceImpl implements CinemaServiceAPI {
     @Autowired
@@ -28,6 +28,10 @@ public class DefaultCinemaServiceImpl implements CinemaServiceAPI {
     MoocAreaDictTMapper moocAreaDictTMapper;
     @Autowired
     MoocHallDictTMapper moocHallDictTMapper;
+    @Autowired
+    MoocFieldTMapper moocFieldTMapper;
+    @Autowired
+    MoocHallFilmInfoTMapper moocHallFilmInfoTMapper;
 
     @Override
     public Page<CinemaVO> getCinemas(CinemaRequestVO requestVO) {
@@ -73,16 +77,16 @@ public class DefaultCinemaServiceImpl implements CinemaServiceAPI {
 
         List<MoocBrandDictT> brandDictTS = moocBrandDictTMapper.selectList(null);
         List<BrandVO> brandVOS = new ArrayList<>();
-        for (MoocBrandDictT brand : brandDictTS){
+        for (MoocBrandDictT brand : brandDictTS) {
             BrandVO brandVO = new BrandVO();
             brandVO.setBrandName(brand.getShowName());
             brandVO.setBrandId(brand.getUuid());
-            if (flag){
-                if(brand.getUuid() == 99) {
+            if (flag) {
+                if (brand.getUuid() == 99) {
                     brandVO.setActive(true);
                 }
-            } else{
-                if (brand.getUuid() == brandId){
+            } else {
+                if (brand.getUuid() == brandId) {
                     brandVO.setActive(true);
                 }
             }
@@ -102,16 +106,16 @@ public class DefaultCinemaServiceImpl implements CinemaServiceAPI {
 
         List<MoocAreaDictT> areaDictTS = moocAreaDictTMapper.selectList(null);
         List<AreaVO> areaVOS = new ArrayList<>();
-        for (MoocAreaDictT area : areaDictTS){
+        for (MoocAreaDictT area : areaDictTS) {
             AreaVO areaVO = new AreaVO();
             areaVO.setAreaName(area.getShowName());
             areaVO.setAreaId(area.getUuid());
-            if (flag){
-                if(area.getUuid() == 99) {
+            if (flag) {
+                if (area.getUuid() == 99) {
                     areaVO.setActive(true);
                 }
-            } else{
-                if (area.getUuid() == areaId){
+            } else {
+                if (area.getUuid() == areaId) {
                     areaVO.setActive(true);
                 }
             }
@@ -131,16 +135,16 @@ public class DefaultCinemaServiceImpl implements CinemaServiceAPI {
 
         List<MoocHallDictT> hallDictTS = moocHallDictTMapper.selectList(null);
         List<HallTypeVO> hallTypeVOS = new ArrayList<>();
-        for (MoocHallDictT hall : hallDictTS){
+        for (MoocHallDictT hall : hallDictTS) {
             HallTypeVO hallTypeVO = new HallTypeVO();
             hallTypeVO.setHalltypeName(hall.getShowName());
             hallTypeVO.setHalltypeId(hall.getUuid());
-            if (flag){
-                if(hall.getUuid() == 99) {
+            if (flag) {
+                if (hall.getUuid() == 99) {
                     hallTypeVO.setActive(true);
                 }
-            } else{
-                if (hall.getUuid() == halltypeId){
+            } else {
+                if (hall.getUuid() == halltypeId) {
                     hallTypeVO.setActive(true);
                 }
             }
@@ -165,16 +169,16 @@ public class DefaultCinemaServiceImpl implements CinemaServiceAPI {
 
     @Override
     public List<FilmInfoVO> getFilmInfoByCinemaId(int cinemaId) {
-        return null;
+        return moocFieldTMapper.getFilmInfos(cinemaId);
     }
 
     @Override
     public FilmInfoVO getFilmInfoByFieldId(int fieldId) {
-        return null;
+        return moocHallFilmInfoTMapper.getFilmInfoByFieldId(fieldId);
     }
 
     @Override
     public HallInfoVO getHallInfoByFieldId(int fieldId) {
-        return null;
+        return moocFieldTMapper.getHallInfoByFieldId(fieldId);
     }
 }

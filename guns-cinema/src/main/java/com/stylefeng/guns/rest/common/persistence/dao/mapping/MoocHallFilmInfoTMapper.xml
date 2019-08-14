@@ -14,4 +14,19 @@
         <result column="img_address" property="imgAddress" />
     </resultMap>
 
+    <select id="getFilmInfoByFieldId" resultType="com.stylefeng.guns.api.cinema.vo.FilmInfoVO" parameterType="int">
+        SELECT
+            hf.`film_id` AS filmId,
+            hf.`film_name` AS filmName,
+            hf.`film_length` AS filmLength,
+            hf.`film_language` AS filmType,
+            hf.`film_cats` AS filmCats,
+            hf.`actors`,
+            hf.`img_address` AS imgAddress
+        FROM
+            mooc_field_t f,
+            mooc_hall_film_info_t hf
+        WHERE f.`film_id` = hf.`film_id`
+          AND f.`UUID` = #{fieldId} ;
+    </select>
 </mapper>

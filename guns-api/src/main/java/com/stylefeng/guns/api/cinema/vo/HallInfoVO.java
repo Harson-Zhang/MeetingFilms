@@ -10,5 +10,5 @@ public class HallInfoVO implements Serializable {
     private String hallName;
     private String price;
     private String seatFile;
-    private String soldSeats;
+    private String soldSeats;  //必须关联订单才能得知
 }
