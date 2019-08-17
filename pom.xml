@@ -18,6 +18,7 @@
         <module>guns-user</module>
         <module>guns-film</module>
         <module>guns-cinema</module>
+        <module>guns-order</module>
     </modules>
 
     <parent>
@@ -48,6 +49,8 @@
         <jwt.version>0.9.0</jwt.version>
         <hutool.version>4.1.1</hutool.version>
         <lombok.version>1.18.0</lombok.version>
+        <commons-net.version>3.6</commons-net.version>
+        <junit.version>4.12</junit.version>
     </properties>
 
     <dependencyManagement>
@@ -182,7 +185,19 @@
                 <version>${lombok.version}</version>
                 <scope>provided</scope>
             </dependency>
-
+            <!-- https://mvnrepository.com/artifact/commons-net/commons-net -->
+            <dependency>
+                <groupId>commons-net</groupId>
+                <artifactId>commons-net</artifactId>
+                <version>${commons-net.version}</version>
+            </dependency>
+            <!-- https://mvnrepository.com/artifact/junit/junit -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
