@@ -7,7 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 @SpringBootApplication(scanBasePackages = {"com.stylefeng.guns"})
 @EnableDubboConfiguration
-@EnableConfigurationProperties({com.stylefeng.guns.rest.common.utils.FTPUtils.class})
+
 public class OrderApplication {
 
     public static void main(String[] args) {

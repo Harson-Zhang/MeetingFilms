@@ -19,6 +19,8 @@
         <module>guns-film</module>
         <module>guns-cinema</module>
         <module>guns-order</module>
+        <module>uid-generator</module>
+        <module>uid-provider</module>
     </modules>
 
     <parent>

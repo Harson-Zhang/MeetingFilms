@@ -14,6 +14,17 @@
         <result column="price" property="price" />
     </resultMap>
 
+    <resultMap id="FieldInfoMap" type="com.stylefeng.guns.api.cinema.vo.FieldInfoVo">
+        <id column="UUID" property="uuid" />
+        <result column="cinema_id" property="cinemaId" />
+        <result column="film_id" property="filmId" />
+        <result column="begin_time" property="beginTime" />
+        <result column="end_time" property="endTime" />
+        <result column="hall_id" property="hallId" />
+        <result column="hall_name" property="hallName" />
+        <result column="price" property="price" />
+    </resultMap>
+
     <resultMap id="filmInfoMap" type="com.stylefeng.guns.api.cinema.vo.FilmInfoVO">
         <result column="film_id" property="filmId" />
         <result column="film_name" property="filmName" />
@@ -65,5 +76,13 @@
             mooc_hall_dict_t hd
         WHERE f.`hall_id` = hd.`UUID`
           AND f.`UUID` = #{fieldId}
+    </select>
+
+    <select id="getFieldInfoByFieldId" parameterType="int" resultMap="FieldInfoMap">
+        SELECT * FROM mooc_field_t WHERE uuid = #{fieldId}
+    </select>
+    
+    <select id="getSoldSeatsByFieldId" parameterType="int" resultType="String">
+        SELECT GROUP_CONCAT(seats_ids SEPARATOR ",") FROM mooc_order_t WHERE field_id = #{fieldId};
     </select>
 </mapper>

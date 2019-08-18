@@ -1,5 +1,6 @@
 package com.stylefeng.guns.rest.common.persistence.dao;
 
+import com.stylefeng.guns.api.cinema.vo.FieldInfoVo;
 import com.stylefeng.guns.api.cinema.vo.FilmInfoVO;
 import com.stylefeng.guns.api.cinema.vo.HallInfoVO;
 import com.stylefeng.guns.rest.common.persistence.model.MoocFieldT;
@@ -20,4 +21,8 @@ public interface MoocFieldTMapper extends BaseMapper<MoocFieldT> {
     List<FilmInfoVO> getFilmInfos(@Param("cinemaId") int cinemaId);
 
     HallInfoVO getHallInfoByFieldId(@Param("fieldId") int fieldId);
+
+    FieldInfoVo getFieldInfoByFieldId(@Param("fieldId") int fieldId);
+
+    String getSoldSeatsByFieldId(@Param("fieldId") int fieldId);
 }

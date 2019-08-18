@@ -17,4 +17,49 @@
         <result column="order_status" property="orderStatus" />
     </resultMap>
 
+    <select id="getOrderInfoById" resultType="com.stylefeng.guns.api.order.vo.OrderInfoVO" parameterType="java.lang.String">
+        SELECT
+            o.`UUID` AS orderId,
+            fm.`film_name` AS filmName,
+            CONCAT("今天 ", DATE_FORMAT(o.`order_time` ,"%m月%d日 ") , fd.`begin_time`) AS fieldTime,
+            c.`cinema_name` AS cinemaName,
+            o.`seats_name` AS seatsName,
+            o.`order_price` AS orderPrice,
+            UNIX_TIMESTAMP(o.`order_time`) AS orderTimestamp
+        FROM
+            mooc_order_t o,
+            mooc_film_t fm,
+            mooc_field_t fd,
+            mooc_cinema_t c
+        WHERE
+            o.`cinema_id` = c.`UUID`
+          AND o.`field_id` = fd.`UUID`
+          AND o.`film_id` = fm.`UUID`
+          AND o.`UUID` = #{orderId};
+    </select>
+
+    <select id="getOrdersByUser" resultType="com.stylefeng.guns.api.order.vo.OrderInfoVO">
+        SELECT
+            o.`UUID` AS orderId,
+            fm.`film_name` AS filmName,
+            CONCAT(
+                    "今天 ",
+                    DATE_FORMAT(o.`order_time`, "%m月%d日 "),
+                    fd.`begin_time`
+                ) AS fieldTime,
+            c.`cinema_name` AS cinemaName,
+            o.`seats_name` AS seatsName,
+            o.`order_price` AS orderPrice,
+            o.`order_status` AS orderStatus
+        FROM
+            mooc_order_t o,
+            mooc_film_t fm,
+            mooc_field_t fd,
+            mooc_cinema_t c
+        WHERE o.`cinema_id` = c.`UUID`
+          AND o.`field_id` = fd.`UUID`
+          AND o.`film_id` = fm.`UUID`
+          AND o.`order_user` = #{userId}
+        LIMIT #{start}, #{end} ;
+    </select>
 </mapper>
