@@ -92,11 +92,6 @@
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j-version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>log4j-over-slf4j</artifactId>
-            <version>${slf4j-version}</version>
-        </dependency>
 
         <!-- Test. Scope test only -->
         <dependency>

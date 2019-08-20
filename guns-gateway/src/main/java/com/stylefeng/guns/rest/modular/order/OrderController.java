@@ -2,9 +2,12 @@ package com.stylefeng.guns.rest.modular.order;
 
 import com.alibaba.dubbo.config.annotation.Reference;
 import com.baomidou.mybatisplus.plugins.Page;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixProperty;
 import com.stylefeng.guns.api.order.OrderServiceAPI;
 import com.stylefeng.guns.api.order.vo.OrderInfoVO;
 import com.stylefeng.guns.rest.common.CurrentUser;
+import com.stylefeng.guns.rest.common.util.TokenBucket;
 import com.stylefeng.guns.rest.modular.vo.ResponseVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -22,6 +25,25 @@ public class OrderController {
     @Reference(interfaceClass = OrderServiceAPI.class, check = false, loadbalance = "roundrobin")
     OrderServiceAPI orderServiceAPI;
 
+    TokenBucket tokenBucket = new TokenBucket();
+
+    ResponseVO buyTicketsError (int fieldId, String soldSeats, String seatsName) {
+        return ResponseVO.serviceFail("抱歉，下单的人太多，请稍候重试！");
+    }
+
+    @HystrixCommand(fallbackMethod = "buyTicketsError", commandProperties = {
+            @HystrixProperty(name="execution.isolation.strategy", value = "THREAD"),
+            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "4000"),
+            @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
+            @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50")
+            }, threadPoolProperties = {
+                @HystrixProperty(name = "coreSize", value = "1"),
+                @HystrixProperty(name = "maxQueueSize", value = "10"),
+                @HystrixProperty(name = "keepAliveTimeMinutes", value = "1000"),
+                @HystrixProperty(name = "queueSizeRejectionThreshold", value = "8"),
+                @HystrixProperty(name = "metrics.rollingStats.numBuckets", value = "12"),
+                @HystrixProperty(name = "metrics.rollingStats.timeInMilliseconds", value = "1500")
+            })
     @RequestMapping(value = "/buyTickets", method = RequestMethod.POST)
     ResponseVO buyTickets(@RequestParam(name = "fieldId") int fieldId,
                           @RequestParam(name = "soldSeats") String soldSeats,
@@ -32,6 +54,11 @@ public class OrderController {
             log.error("入参异常，fieldId: {}，soldSeats: {}，seatsName: {}", fieldId, soldSeats, seatsName);
             return ResponseVO.serviceFail("输入参数异常！");
         }
+        // 令牌判断
+        if (!tokenBucket.getToken()){
+            return ResponseVO.serviceFail("T^T 抱歉，下单的人太多，请稍候重试！");
+        }
+
         String[] seatsArr = soldSeats.split(",");
         int[] seatsInt = new int[seatsArr.length];
         for (int i = 0; i < seatsArr.length; i++) {
