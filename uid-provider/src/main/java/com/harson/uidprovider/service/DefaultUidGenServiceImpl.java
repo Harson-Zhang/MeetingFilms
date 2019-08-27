@@ -1,13 +1,15 @@
 package com.harson.uidprovider.service;
 
+import com.alibaba.dubbo.config.annotation.Service;
 import com.baidu.fsg.uid.UidGenerator;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import com.stylefeng.guns.api.uid.UidGenAPI;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
-@Service
-public class UidGenService {
+@Component
+@Service(interfaceClass = UidGenAPI.class)
+public class DefaultUidGenServiceImpl implements UidGenAPI{
 
     @Resource(name = "cachedUidGenerator")
     private UidGenerator uidGenerator;

@@ -32,8 +32,4 @@
 		<!--<property name="rejectedTakeBufferHandler" ref="XxxxYourTakeRejectPolicy"></property>--> 
 		
 	</bean>
-
-	<!-- Import mybatis config -->
-	<import resource="classpath:/uid/mybatis-spring.xml" />
-
 </beans>

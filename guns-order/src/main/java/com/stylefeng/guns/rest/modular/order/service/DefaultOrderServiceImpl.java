@@ -11,6 +11,7 @@ import com.stylefeng.guns.api.cinema.vo.FieldInfoVo;
 import com.stylefeng.guns.api.cinema.vo.HallInfoVO;
 import com.stylefeng.guns.api.order.OrderServiceAPI;
 import com.stylefeng.guns.api.order.vo.OrderInfoVO;
+import com.stylefeng.guns.api.uid.UidGenAPI;
 import com.stylefeng.guns.rest.common.persistence.dao.MoocOrderTMapper;
 import com.stylefeng.guns.rest.common.persistence.model.MoocOrderT;
 import com.stylefeng.guns.rest.common.utils.FTPUtils;
@@ -29,6 +30,9 @@ import java.util.List;
 public class DefaultOrderServiceImpl implements OrderServiceAPI {
     @Reference(interfaceClass = CinemaServiceAPI.class, check = false)
     CinemaServiceAPI cinemaServiceAPI;
+
+    @Reference(interfaceClass = UidGenAPI.class)
+    UidGenAPI uidGenAPI;
 
     @Autowired
     MoocOrderTMapper moocOrderTMapper;
@@ -71,7 +75,7 @@ public class DefaultOrderServiceImpl implements OrderServiceAPI {
 
     @Override
     public OrderInfoVO createOrder(int fieldId, int[] seatIds, int userId, String seatsName) {
-        String uuid = RandomUtil.simpleUUID();  //后期记得改进
+        String uuid = uidGenAPI.getUid() + "";  //Harson: 万一uid-provider宕掉了呢？
         FieldInfoVo fieldInfoVo = cinemaServiceAPI.getFieldInfoByFieldId(fieldId);
 
         MoocOrderT moocOrderT = new MoocOrderT();
@@ -171,12 +175,28 @@ public class DefaultOrderServiceImpl implements OrderServiceAPI {
         return bigDecimal.doubleValue();
     }
 
-//    @Test
-//    void test() {
-//        int[] seatIds = {1, 2, 3};
-//        String[] seatsFileArr = {"1","2", "3", "4"};
-//        System.out.println(areSeatsExist(seatIds, seatsFileArr));
-//    }
+    @Override
+    public OrderInfoVO getOrderById(String orderId) {
+        return moocOrderTMapper.getOrderInfoById(orderId);
+    }
 
+    @Override
+    public boolean paySuccess(String orderId) {
+        MoocOrderT moocOrderT = new MoocOrderT();
+        moocOrderT.setUuid(orderId);
+        moocOrderT.setOrderStatus(1);
 
+        Integer result = moocOrderTMapper.updateById(moocOrderT);
+        if (result > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean payFail(String orderId) {
+        // 好像不用写。。。
+        return false;
+    }
 }

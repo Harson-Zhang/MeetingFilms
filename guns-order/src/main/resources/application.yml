@@ -35,7 +35,7 @@ mybatis-plus:
 
 spring:
   application:
-    name: meeting-cinema
+    name: meeting-order
   dubbo:
     server: true
     registry: zookeeper://localhost:2181
