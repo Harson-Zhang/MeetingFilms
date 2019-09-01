@@ -30,9 +30,9 @@ import java.util.List;
 
 @Slf4j
 @Component
-@Service(interfaceClass = AlipayServiceAPI.class)
+@Service(interfaceClass = AlipayServiceAPI.class, filter = "tracing")
 public class DefaultAlipayServiceImpl implements AlipayServiceAPI {
-    @Reference(interfaceClass = OrderServiceAPI.class, check = false)
+    @Reference(interfaceClass = OrderServiceAPI.class, check = false, filter = "tracing")
     OrderServiceAPI orderServiceAPI;
 
     // 支付宝当面付2.0服务

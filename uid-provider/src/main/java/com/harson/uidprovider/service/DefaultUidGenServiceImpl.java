@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 
 @Component
-@Service(interfaceClass = UidGenAPI.class)
+@Service(interfaceClass = UidGenAPI.class, filter = "tracing")
 public class DefaultUidGenServiceImpl implements UidGenAPI{
 
     @Resource(name = "cachedUidGenerator")

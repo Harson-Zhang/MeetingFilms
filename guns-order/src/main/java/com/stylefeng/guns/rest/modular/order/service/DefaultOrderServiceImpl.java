@@ -26,12 +26,12 @@ import java.util.List;
 
 @Slf4j
 @Component
-@Service(interfaceClass = OrderServiceAPI.class)
+@Service(interfaceClass = OrderServiceAPI.class, filter = "tracing")
 public class DefaultOrderServiceImpl implements OrderServiceAPI {
-    @Reference(interfaceClass = CinemaServiceAPI.class, check = false)
+    @Reference(interfaceClass = CinemaServiceAPI.class, check = false, filter = "tracing")
     CinemaServiceAPI cinemaServiceAPI;
 
-    @Reference(interfaceClass = UidGenAPI.class)
+    @Reference(interfaceClass = UidGenAPI.class, filter = "tracing")
     UidGenAPI uidGenAPI;
 
     @Autowired
@@ -58,13 +58,17 @@ public class DefaultOrderServiceImpl implements OrderServiceAPI {
         List<MoocOrderT> orderTS = moocOrderTMapper.selectList(wrapper);
         HashSet<Integer> hashSet = new HashSet<>();
         String[] seatsIdArr;
+
         for (MoocOrderT orderT : orderTS) {
-            String seatsIdStr = orderT.getSeatsIds();
-            seatsIdArr = seatsIdStr.split(",");
-            for (String seat : seatsIdArr) {
-                hashSet.add(Integer.parseInt(seat));
+            if(orderT.getOrderStatus() != 2){
+                String seatsIdStr = orderT.getSeatsIds();
+                seatsIdArr = seatsIdStr.split(",");
+                for (String seat : seatsIdArr) {
+                    hashSet.add(Integer.parseInt(seat));
+                }
             }
         }
+
         for (int seatId : seatIds) {
             if (hashSet.contains(seatId)) {
                 return false;

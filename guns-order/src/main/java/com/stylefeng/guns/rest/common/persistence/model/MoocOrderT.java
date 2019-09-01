@@ -23,7 +23,7 @@ public class MoocOrderT extends Model<MoocOrderT> {
     /**
      * 主键编号
      */
-    @TableId("UUID")
+    @TableId("UUID")  //updateById和createOrder的需求不一，通过配置yml的id属性解决
     private String uuid;
     /**
      * 影院编号

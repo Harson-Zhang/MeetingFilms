@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service(interfaceClass = CinemaServiceAPI.class, executes = 10)
+@Service(interfaceClass = CinemaServiceAPI.class, filter = "tracing")
 @Component
 public class DefaultCinemaServiceImpl implements CinemaServiceAPI {
     @Autowired

@@ -26,10 +26,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/order")
 public class OrderController {
-    @Reference(interfaceClass = OrderServiceAPI.class, check = false, loadbalance = "roundrobin")
+    @Reference(interfaceClass = OrderServiceAPI.class, check = false, filter = "tracing")
     OrderServiceAPI orderServiceAPI;
 
-    @Reference(interfaceClass = AlipayServiceAPI.class, check = false, mock = "com.stylefeng.guns.api.alipay.AlipayServiceMock")
+    @Reference(interfaceClass = AlipayServiceAPI.class, check = false, mock = "com.stylefeng.guns.api.alipay.AlipayServiceMock", filter = "tracing")
     AlipayServiceAPI alipayServiceAPI;
 
     private static final String IMG_PRE = "http://img.meetingshop.cn/";
@@ -74,17 +74,21 @@ public class OrderController {
         }
         // 验证座位是否合法
         boolean isSeatsLegal = orderServiceAPI.isTrueSeats(fieldId, seatsInt);
+        log.info("座位合法");
         // 验证当前座位是否为空
         boolean isNotSold = orderServiceAPI.isNotSold(fieldId, seatsInt);
+        log.info("座位不为空");
         // 验证用户是否登录
         String userId = CurrentUser.getCurrentUser();
         if (userId == null || "".equals(userId.trim())) {
             return ResponseVO.serviceFail("用户未登录");
         }
+        log.info("用户已登录");
         // 创建座位订单
         OrderInfoVO orderInfoVO;
         if (isSeatsLegal && isNotSold) {
             orderInfoVO = orderServiceAPI.createOrder(fieldId, seatsInt, Integer.parseInt(userId), seatsName);
+            log.info("用户创建订单");
             if (orderInfoVO == null) {
                 log.error("订单生成失败");
                 return ResponseVO.serviceFail("购票业务异常");
