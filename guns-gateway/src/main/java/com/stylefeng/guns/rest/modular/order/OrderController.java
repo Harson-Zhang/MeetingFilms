@@ -9,10 +9,12 @@ import com.stylefeng.guns.api.alipay.AlipayServiceAPI;
 import com.stylefeng.guns.api.alipay.vo.PayInfoVO;
 import com.stylefeng.guns.api.alipay.vo.PayResultVO;
 import com.stylefeng.guns.api.order.OrderServiceAPI;
+import com.stylefeng.guns.api.order.OrderServiceAsyncAPI;
 import com.stylefeng.guns.api.order.vo.OrderInfoVO;
 import com.stylefeng.guns.rest.common.CurrentUser;
 import com.stylefeng.guns.rest.common.util.TokenBucket;
 import com.stylefeng.guns.rest.modular.vo.ResponseVO;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 @Slf4j
 @RestController
@@ -28,6 +32,9 @@ import java.util.List;
 public class OrderController {
     @Reference(interfaceClass = OrderServiceAPI.class, check = false, filter = "tracing")
     OrderServiceAPI orderServiceAPI;
+
+    @Reference(interfaceClass = OrderServiceAsyncAPI.class, check = false, async = true, filter = "tracing")
+    OrderServiceAsyncAPI orderServiceAsyncAPI;
 
     @Reference(interfaceClass = AlipayServiceAPI.class, check = false, mock = "com.stylefeng.guns.api.alipay.AlipayServiceMock", filter = "tracing")
     AlipayServiceAPI alipayServiceAPI;
@@ -39,23 +46,23 @@ public class OrderController {
         return ResponseVO.serviceFail("抱歉，下单的人太多，请稍候重试！");
     }
 
-    @HystrixCommand(fallbackMethod = "buyTicketsError", commandProperties = {
-            @HystrixProperty(name = "execution.isolation.strategy", value = "THREAD"),
-            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "4000"),
-            @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
-            @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50")
-    }, threadPoolProperties = {
-            @HystrixProperty(name = "coreSize", value = "1"),
-            @HystrixProperty(name = "maxQueueSize", value = "10"),
-            @HystrixProperty(name = "keepAliveTimeMinutes", value = "1000"),
-            @HystrixProperty(name = "queueSizeRejectionThreshold", value = "8"),
-            @HystrixProperty(name = "metrics.rollingStats.numBuckets", value = "12"),
-            @HystrixProperty(name = "metrics.rollingStats.timeInMilliseconds", value = "1500")
-    })
+//    @HystrixCommand(fallbackMethod = "buyTicketsError", commandProperties = {
+//            @HystrixProperty(name = "execution.isolation.strategy", value = "THREAD"),
+//            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "4000"),
+//            @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
+//            @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50")
+//    }, threadPoolProperties = {
+//            @HystrixProperty(name = "coreSize", value = "1"),
+//            @HystrixProperty(name = "maxQueueSize", value = "10"),
+//            @HystrixProperty(name = "keepAliveTimeMinutes", value = "1000"),
+//            @HystrixProperty(name = "queueSizeRejectionThreshold", value = "8"),
+//            @HystrixProperty(name = "metrics.rollingStats.numBuckets", value = "12"),
+//            @HystrixProperty(name = "metrics.rollingStats.timeInMilliseconds", value = "1500")
+//    })
     @RequestMapping(value = "/buyTickets", method = RequestMethod.POST)
     public ResponseVO buyTickets(@RequestParam(name = "fieldId") int fieldId,
                                  @RequestParam(name = "soldSeats") String soldSeats,
-                                 @RequestParam(name = "seatsName") String seatsName) {
+                                 @RequestParam(name = "seatsName") String seatsName) throws ExecutionException, InterruptedException {
         // 判非法
         if (fieldId < 0 || StringUtils.isEmpty(soldSeats) || "".equals(soldSeats.trim()) ||
                 StringUtils.isEmpty(seatsName) || "".equals(seatsName.trim())) {
@@ -67,38 +74,39 @@ public class OrderController {
             return ResponseVO.serviceFail("T^T 抱歉，下单的人太多，请稍候重试！");
         }
 
-        String[] seatsArr = soldSeats.split(",");
-        int[] seatsInt = new int[seatsArr.length];
-        for (int i = 0; i < seatsArr.length; i++) {
-            seatsInt[i] = Integer.parseInt(seatsArr[i]);
-        }
-        // 验证座位是否合法
-        boolean isSeatsLegal = orderServiceAPI.isTrueSeats(fieldId, seatsInt);
-        log.info("座位合法");
-        // 验证当前座位是否为空
-        boolean isNotSold = orderServiceAPI.isNotSold(fieldId, seatsInt);
-        log.info("座位不为空");
         // 验证用户是否登录
         String userId = CurrentUser.getCurrentUser();
         if (userId == null || "".equals(userId.trim())) {
             return ResponseVO.serviceFail("用户未登录");
         }
         log.info("用户已登录");
-        // 创建座位订单
-        OrderInfoVO orderInfoVO;
-        if (isSeatsLegal && isNotSold) {
-            orderInfoVO = orderServiceAPI.createOrder(fieldId, seatsInt, Integer.parseInt(userId), seatsName);
-            log.info("用户创建订单");
-            if (orderInfoVO == null) {
-                log.error("订单生成失败");
-                return ResponseVO.serviceFail("购票业务异常");
-            } else {
-                return ResponseVO.success(orderInfoVO);
-            }
-        } else {
-            return ResponseVO.serviceFail("该订单座位编号异常");
+
+        String[] seatsArr = soldSeats.split(",");
+        int[] seatsInt = new int[seatsArr.length];
+        for (int i = 0; i < seatsArr.length; i++) {
+            seatsInt[i] = Integer.parseInt(seatsArr[i]);
         }
 
+        // 验证座位是否合法
+        orderServiceAsyncAPI.isTrueSeats(fieldId, seatsInt);
+        Future<Boolean> isSeatsLegal = RpcContext.getContext().getFuture();
+
+        // 验证当前座位是否为空
+        orderServiceAsyncAPI.isNotSold(fieldId, seatsInt);
+        Future<Boolean> isNotSold = RpcContext.getContext().getFuture();
+
+        // 创建座位订单
+        orderServiceAsyncAPI.createOrder(fieldId, seatsInt, Integer.parseInt(userId), seatsName);
+        Future<OrderInfoVO> orderInfoVOFuture = RpcContext.getContext().getFuture();
+
+        log.info("用户创建订单");
+        if (orderInfoVOFuture.get() == null) {
+            log.error("订单生成失败, 座位合法：{}, 座位未售：{}",isSeatsLegal.get(), isNotSold.get());
+            return ResponseVO.serviceFail("购票业务异常");
+        } else {
+            log.info("订单生成成功, 座位合法：{}, 座位未售：{}",isSeatsLegal.get(), isNotSold.get());
+            return ResponseVO.success(orderInfoVOFuture.get());
+        }
     }
 
     @RequestMapping(value = "/getOrderInfo", method = RequestMethod.POST)
@@ -164,7 +172,7 @@ public class OrderController {
             return ResponseVO.success(resultVO);
         } catch (Exception e) {
             e.printStackTrace();
-            log.error("异常信息：{}",e.getMessage());
+            log.error("异常信息：{}", e.getMessage());
             return ResponseVO.serviceFail("订单查询失败，请稍候重试");
         }
     }

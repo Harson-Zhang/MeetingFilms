@@ -92,10 +92,4 @@ public class FTPUtils {
             }
         }
     }
-
-    @Test
-    public void testFtp() {
-        File file = new File("D:/Document/qr-code/qr-3529409819532476416.png");
-        System.out.println(upload("qr1", file));
-    }
 }

@@ -3,6 +3,7 @@ package com.stylefeng.guns;
 import com.stylefeng.guns.rest.OrderApplication;
 import com.stylefeng.guns.rest.common.utils.FTPUtils;
 import com.stylefeng.guns.rest.modular.order.service.DefaultOrderServiceImpl;
+import com.stylefeng.guns.rest.modular.order.service.DefaultOrderServiceImplAsync;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ public class GunsRestApplicationTests {
 	@Autowired
 	private FTPUtils ftpUtils;
 	@Autowired
-	DefaultOrderServiceImpl defaultOrderService;
+	DefaultOrderServiceImplAsync defaultOrderService;
 
 	@Test
 	public void contextLoads() {
@@ -31,6 +32,6 @@ public class GunsRestApplicationTests {
 
 	@Test
 	public void testFTPUtils(){
-
+		System.out.println(ftpUtils.getFileStrByAddress("seats/123214.json"));
 	}
 }

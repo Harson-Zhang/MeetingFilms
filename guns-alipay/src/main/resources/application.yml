@@ -10,13 +10,6 @@ jwt:
   md5-key: randomKey      #md5加密混淆key
   ignore-url: /user/,/film  #应该在gateway里写
 
-ftp:
-  host-name: 127.0.0.1
-  port: 2100
-  user-name: ftp
-  password: ftp
-  upload-path: /qrcode
-
 server:
   port: 8087 #项目端口
 
@@ -35,6 +28,8 @@ mybatis-plus:
 #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl #打印sql语句,调试用
 
 spring:
+  profiles:
+    active: dev
   application:
     name: meeting-alipay
   dubbo:

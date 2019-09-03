@@ -1,0 +1,6 @@
+ftp:
+  host-name: 127.0.0.1
+  port: 21
+  user-name: ftpcilent
+  password: 123
+  upload-path: /home/ftpcilent/qrcode

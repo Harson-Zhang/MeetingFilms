@@ -1,0 +1,6 @@
+ftp:
+  host-name: 127.0.0.1
+  port: 2101
+  user-name: ftp
+  password: ftp
+  seat-path: /

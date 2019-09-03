@@ -9,6 +9,7 @@ import com.stylefeng.guns.api.alipay.vo.PayInfoVO;
 import com.stylefeng.guns.api.alipay.vo.PayResultVO;
 import com.stylefeng.guns.api.order.OrderServiceAPI;
 import com.stylefeng.guns.api.order.vo.OrderInfoVO;
+import com.stylefeng.guns.rest.common.utils.FTPUtils;
 import com.stylefeng.guns.rest.modular.alipay.config.Configs;
 import com.stylefeng.guns.rest.modular.alipay.model.ExtendParams;
 import com.stylefeng.guns.rest.modular.alipay.model.GoodsDetail;
@@ -23,8 +24,10 @@ import com.stylefeng.guns.rest.modular.alipay.service.impl.AlipayTradeServiceImp
 import com.stylefeng.guns.rest.modular.alipay.service.impl.AlipayTradeWithHBServiceImpl;
 import com.stylefeng.guns.rest.modular.alipay.utils.ZxingUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +37,9 @@ import java.util.List;
 public class DefaultAlipayServiceImpl implements AlipayServiceAPI {
     @Reference(interfaceClass = OrderServiceAPI.class, check = false, filter = "tracing")
     OrderServiceAPI orderServiceAPI;
+
+    @Autowired
+    FTPUtils ftpUtils;
 
     // 支付宝当面付2.0服务
     private static AlipayTradeService tradeService;
@@ -172,10 +178,11 @@ public class DefaultAlipayServiceImpl implements AlipayServiceAPI {
                 AlipayTradePrecreateResponse response = result.getResponse();
 
                 // 需要修改为运行机器上的路径
-                filePath = String.format("D:/Document/qr-code/qr-%s.png",
+                filePath = String.format("/qr-code/qr-%s.png",
                         response.getOutTradeNo());
                 log.info("filePath:" + filePath);
-                ZxingUtils.getQRCodeImge(response.getQrCode(), 256, filePath);
+                File qrCodeImge = ZxingUtils.getQRCodeImge(response.getQrCode(), 256, filePath);
+                ftpUtils.upload(String.format("qr-%s.png", response.getOutTradeNo()), qrCodeImge);
                 break;
 
             case FAILED:
