@@ -28,7 +28,7 @@ public class GunsRestApplicationTests {
 
 	@Test
 	public void testFTPUtils(){
-		File file = new File("D:/FTPServer/qr-code/generate.png");
-		System.out.println(ftpUtils.upload("qr1.png", file));
+		File file = new File("D:/FTPServer/qr1.png");
+		System.out.println(ftpUtils.upload("qr32421.png", file));
 	}
 }

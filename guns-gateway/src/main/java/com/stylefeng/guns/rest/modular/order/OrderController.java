@@ -145,6 +145,7 @@ public class OrderController {
             PayInfoVO payInfo = alipayServiceAPI.getQRCodeByOrderId(orderId);
             return ResponseVO.success(payInfo, IMG_PRE);
         } catch (Exception e) {
+            log.error(e.getMessage());
             return ResponseVO.serviceFail("订单支付失败，请稍候重试");
         }
     }

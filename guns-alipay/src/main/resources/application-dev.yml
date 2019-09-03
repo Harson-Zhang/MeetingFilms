@@ -3,4 +3,5 @@ ftp:
   port: 2101
   user-name: ftp
   password: ftp
-  upload-path: /qrcode
+  upload-path: /qrcode/
+  ftp-path: E:/JavaProjectFiles/filmseats

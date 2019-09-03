@@ -7,12 +7,14 @@ import org.apache.commons.net.ftp.FTPClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 import java.io.*;
 
 @Slf4j
 @Data
 @Configuration
+@Primary
 @ConfigurationProperties(prefix = "ftp")
 public class FTPUtils {
     private String hostName;
@@ -20,6 +22,7 @@ public class FTPUtils {
     private String userName;
     private String password;
     private String uploadPath;
+    private String ftpPath;
 
     private FTPClient ftpClient;
 
