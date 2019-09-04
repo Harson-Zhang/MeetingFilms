@@ -4,18 +4,19 @@ import com.alibaba.dubbo.config.annotation.Reference;
 import com.alibaba.dubbo.config.annotation.Service;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
-import com.baomidou.mybatisplus.plugins.Page;
 import com.stylefeng.guns.api.cinema.CinemaServiceAPI;
 import com.stylefeng.guns.api.cinema.vo.FieldInfoVo;
 import com.stylefeng.guns.api.cinema.vo.HallInfoVO;
-import com.stylefeng.guns.api.order.OrderServiceAPI;
 import com.stylefeng.guns.api.order.OrderServiceAsyncAPI;
 import com.stylefeng.guns.api.order.vo.OrderInfoVO;
-import com.stylefeng.guns.api.uid.UidGenAPI;
 import com.stylefeng.guns.rest.common.persistence.dao.MoocOrderTMapper;
 import com.stylefeng.guns.rest.common.persistence.model.MoocOrderT;
 import com.stylefeng.guns.rest.common.utils.FTPUtils;
+import com.stylefeng.guns.rest.modular.order.exception.OrderCreateException;
+import com.stylefeng.guns.rest.modular.order.exception.SeatException;
 import lombok.extern.slf4j.Slf4j;
+import org.mengyun.tcctransaction.api.Compensable;
+import org.mengyun.tcctransaction.dubbo.context.DubboTransactionContextEditor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,9 +32,6 @@ public class DefaultOrderServiceImplAsync implements OrderServiceAsyncAPI {
     @Reference(interfaceClass = CinemaServiceAPI.class, check = false, filter = "tracing")
     CinemaServiceAPI cinemaServiceAPI;
 
-    @Reference(interfaceClass = UidGenAPI.class, filter = "tracing")
-    UidGenAPI uidGenAPI;
-
     @Autowired
     MoocOrderTMapper moocOrderTMapper;
 
@@ -41,6 +39,7 @@ public class DefaultOrderServiceImplAsync implements OrderServiceAsyncAPI {
     FTPUtils ftpUtils;
 
     @Override
+    @Compensable(confirmMethod = "seatConfirm", cancelMethod = "seatCancel", transactionContextEditor = DubboTransactionContextEditor.class)
     public boolean isTrueSeats(int fieldId, int[] seatIds) {
         // 1. 获取jsonObject, 取出影院位置信息
         JSONObject jsonObject = getJsonObjByFieldId(fieldId);
@@ -48,10 +47,15 @@ public class DefaultOrderServiceImplAsync implements OrderServiceAsyncAPI {
         String[] seatsFileArr = seatsFileStr.split(",");
 
         // 2. 查看位置编号是否在json中存在（seatId）
-        return areSeatsExist(seatIds, seatsFileArr);
+        if(!areSeatsExist(seatIds, seatsFileArr)){
+            log.error("用户所选位置不存在");
+            throw new SeatException("用户所选位置不存在");
+        }
+        return true;
     }
 
     @Override
+    @Compensable(confirmMethod = "notSoldConfirm", cancelMethod = "notSoldCancel", transactionContextEditor = DubboTransactionContextEditor.class)
     public boolean isNotSold(int fieldId, int[] seatIds) {
         EntityWrapper<MoocOrderT> wrapper = new EntityWrapper<>();
         wrapper.eq("field_id", fieldId);
@@ -71,15 +75,16 @@ public class DefaultOrderServiceImplAsync implements OrderServiceAsyncAPI {
 
         for (int seatId : seatIds) {
             if (hashSet.contains(seatId)) {
-                return false;
+                log.error("当前座位已售");
+                throw new SeatException("当前座位已售");
             }
         }
         return true;
     }
 
     @Override
-    public OrderInfoVO createOrder(int fieldId, int[] seatIds, int userId, String seatsName) {
-        String uuid = uidGenAPI.getUid() + "";  //Harson: 万一uid-provider宕掉了呢？
+    @Compensable(confirmMethod = "orderConfirm", cancelMethod = "orderCancel", transactionContextEditor = DubboTransactionContextEditor.class)
+    public OrderInfoVO createOrder(String uuid, int fieldId, int[] seatIds, int userId, String seatsName) {
         FieldInfoVo fieldInfoVo = cinemaServiceAPI.getFieldInfoByFieldId(fieldId);
 
         MoocOrderT moocOrderT = new MoocOrderT();
@@ -97,7 +102,7 @@ public class DefaultOrderServiceImplAsync implements OrderServiceAsyncAPI {
         moocOrderT.setFilmPrice((double) fieldInfoVo.getPrice());
         moocOrderT.setOrderPrice(getOrderPrice((double) fieldInfoVo.getPrice(), seatIds.length));
         moocOrderT.setOrderUser(userId);
-        moocOrderT.setOrderStatus(0);
+        moocOrderT.setOrderStatus(3); //此处修改为草稿状态，以便实现幂等性
 
         Integer insert = moocOrderTMapper.insert(moocOrderT);
         if (insert > 0) {
@@ -108,6 +113,51 @@ public class DefaultOrderServiceImplAsync implements OrderServiceAsyncAPI {
             }
         } else {
             log.error("数据库插入失败！");
+            throw new OrderCreateException("订单创建失败");
+        }
+        return null;
+    }
+
+    public boolean seatConfirm(int fieldId, int[] seatIds){
+        log.info("位置存在确认！");
+        return true;
+    }
+
+    public boolean seatCancel(int fieldId, int[] seatIds){
+        log.info("位置存在取消！");
+        return false;
+    }
+
+    public boolean notSoldConfirm(int fieldId, int[] seatIds) {
+        log.info("位置未售确认！");
+        return true;
+    }
+
+    public boolean notSoldCancel(int fieldId, int[] seatIds) {
+        log.info("位置未售取消！");
+        return false;
+    }
+
+    public OrderInfoVO orderConfirm(String uuid, int fieldId, int[] seatIds, int userId, String seatsName) {
+        OrderInfoVO orderInfoVO = moocOrderTMapper.getOrderInfoById(uuid);
+        if(orderInfoVO!=null && "3".equals(orderInfoVO.getOrderStatus())) {
+            MoocOrderT moocOrderT = new MoocOrderT();
+            moocOrderT.setUuid(uuid);
+            moocOrderT.setOrderStatus(0);
+            moocOrderTMapper.updateById(moocOrderT);
+            log.info("创建订单确认");
+        }
+        return null;
+    }
+
+    public OrderInfoVO orderCancel(String uuid, int fieldId, int[] seatIds, int userId, String seatsName) {
+        OrderInfoVO orderInfoVO = moocOrderTMapper.getOrderInfoById(uuid);
+        if(orderInfoVO!=null && "3".equals(orderInfoVO.getOrderStatus())) {
+            MoocOrderT moocOrderT = new MoocOrderT();
+            moocOrderT.setUuid(uuid);
+            moocOrderT.setOrderStatus(2);
+            moocOrderTMapper.updateById(moocOrderT);
+            log.info("创建订单取消");
         }
         return null;
     }

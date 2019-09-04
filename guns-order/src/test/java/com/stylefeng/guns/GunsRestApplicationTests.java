@@ -27,7 +27,7 @@ public class GunsRestApplicationTests {
 	@Test
 	public void testOrder() {
 		int[] fieldId = {7, 8};
-		defaultOrderService.createOrder(1, fieldId, 2, "第四排没座了");
+		defaultOrderService.createOrder("3r1232", 1, fieldId, 2, "第四排没座了");
 	}
 
 	@Test
