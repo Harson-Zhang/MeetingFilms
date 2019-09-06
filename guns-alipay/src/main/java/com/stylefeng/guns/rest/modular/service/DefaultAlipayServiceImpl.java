@@ -111,6 +111,10 @@ public class DefaultAlipayServiceImpl implements AlipayServiceAPI {
     private String trade_precreate(String orderId) {
 
         OrderInfoVO order = orderServiceAPI.getOrderById(orderId);
+        if(order==null || order.getOrderStatus().equals("2")){  // 状态3到底配不配呢~
+            log.info("当前订单号不存在或失效");
+            return null;
+        }
 
         // 二维码路径
         String filePath = null;

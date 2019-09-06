@@ -29,7 +29,7 @@ mybatis-plus:
 
 spring:
   profiles:
-    active: dev
+    active: prod
   application:
     name: meeting-alipay
   dubbo:

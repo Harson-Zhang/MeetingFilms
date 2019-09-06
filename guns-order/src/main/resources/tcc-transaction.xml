@@ -49,17 +49,17 @@
 
     <bean id="transactionRepository"
           class="org.mengyun.tcctransaction.spring.repository.SpringJdbcTransactionRepository">
-        <!--<property name="dataSource" ref="dataSource"/>-->
+        <property name="dataSource" ref="dataSource"/>
         <property name="domain" value="OrderDomain"/>
         <property name="tbSuffix" value="_PROVIDER"/>
     </bean>
 
-    <!--<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
         <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
-        <property name="url" value="jdbc:mysql://112.74.168.238:3306/tcc_transaction"/>
+        <property name="url" value="jdbc:mysql://112.74.168.238:3306/guns_rest"/>
         <property name="username" value="root"/>
         <property name="password" value="newl2015ife"/>
-    </bean>-->
+    </bean>
 
     <bean class="org.mengyun.tcctransaction.spring.recover.DefaultRecoverConfig">
         <property name="maxRetryCount" value="3"/>

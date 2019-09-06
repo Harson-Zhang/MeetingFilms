@@ -29,7 +29,7 @@ mybatis-plus:
 
 spring:
   profiles:
-    active: dev
+    active: prod
   application:
     name: meeting-order
   dubbo:
@@ -49,3 +49,11 @@ logging:
   level.com.stylefeng: debug
   path: logs/
   file: meetingfilm-order.log
+
+guns:
+  muti-datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://112.74.168.238:3306/guns_rest?autoReconnect=true&useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+    username: root
+    password: newl2015ife
+    data-source-names: tcc

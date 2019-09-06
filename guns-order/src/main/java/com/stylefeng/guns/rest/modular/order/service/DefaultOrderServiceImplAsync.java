@@ -104,11 +104,13 @@ public class DefaultOrderServiceImplAsync implements OrderServiceAsyncAPI {
         moocOrderT.setOrderUser(userId);
         moocOrderT.setOrderStatus(3); //此处修改为草稿状态，以便实现幂等性
 
+        log.info("订单信息：座位名称：{}", moocOrderT.getSeatsName());
         Integer insert = moocOrderTMapper.insert(moocOrderT);
         if (insert > 0) {
             //创建成功，返回OrderInfoVO
             OrderInfoVO orderInfoVO = moocOrderTMapper.getOrderInfoById(uuid);
             if (orderInfoVO != null && orderInfoVO.getOrderId() != null) {
+                log.info("try阶段插入数据库后：位置信息：{}", orderInfoVO.getSeatsName());
                 return orderInfoVO;
             }
         } else {
@@ -145,6 +147,7 @@ public class DefaultOrderServiceImplAsync implements OrderServiceAsyncAPI {
             moocOrderT.setUuid(uuid);
             moocOrderT.setOrderStatus(0);
             moocOrderTMapper.updateById(moocOrderT);
+            log.info("confirm阶段插入数据库后：位置信息：{}", orderInfoVO.getSeatsName());
             log.info("创建订单确认");
         }
         return null;

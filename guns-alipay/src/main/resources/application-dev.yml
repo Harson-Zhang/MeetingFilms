@@ -4,4 +4,4 @@ ftp:
   user-name: ftp
   password: ftp
   upload-path: /qrcode/
-  ftp-path: E:/JavaProjectFiles/filmseats
+  ftp-path: D:/FTPServer

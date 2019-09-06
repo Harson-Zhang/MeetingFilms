@@ -11,12 +11,15 @@ import com.stylefeng.guns.api.alipay.vo.PayResultVO;
 import com.stylefeng.guns.api.order.OrderServiceAPI;
 import com.stylefeng.guns.api.order.OrderServiceAsyncAPI;
 import com.stylefeng.guns.api.order.vo.OrderInfoVO;
+import com.stylefeng.guns.api.uid.UidGenAPI;
 import com.stylefeng.guns.rest.common.CurrentUser;
 import com.stylefeng.guns.rest.common.util.TokenBucket;
 import com.stylefeng.guns.rest.modular.vo.ResponseVO;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.mengyun.tcctransaction.api.Compensable;
+import org.mengyun.tcctransaction.dubbo.context.DubboTransactionContextEditor;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,6 +42,9 @@ public class OrderController {
     @Reference(interfaceClass = AlipayServiceAPI.class, check = false, mock = "com.stylefeng.guns.api.alipay.AlipayServiceMock", filter = "tracing")
     AlipayServiceAPI alipayServiceAPI;
 
+    @Reference(interfaceClass = UidGenAPI.class, check = false, filter = "tracing")
+    UidGenAPI uidGenAPI;
+
     private static final String IMG_PRE = "http://img.meetingshop.cn/";
     private TokenBucket tokenBucket = new TokenBucket();
 
@@ -46,19 +52,20 @@ public class OrderController {
         return ResponseVO.serviceFail("抱歉，下单的人太多，请稍候重试！");
     }
 
-//    @HystrixCommand(fallbackMethod = "buyTicketsError", commandProperties = {
-//            @HystrixProperty(name = "execution.isolation.strategy", value = "THREAD"),
-//            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "4000"),
-//            @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
-//            @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50")
-//    }, threadPoolProperties = {
-//            @HystrixProperty(name = "coreSize", value = "1"),
-//            @HystrixProperty(name = "maxQueueSize", value = "10"),
-//            @HystrixProperty(name = "keepAliveTimeMinutes", value = "1000"),
-//            @HystrixProperty(name = "queueSizeRejectionThreshold", value = "8"),
-//            @HystrixProperty(name = "metrics.rollingStats.numBuckets", value = "12"),
-//            @HystrixProperty(name = "metrics.rollingStats.timeInMilliseconds", value = "1500")
-//    })
+    @HystrixCommand(fallbackMethod = "buyTicketsError", commandProperties = {
+            @HystrixProperty(name = "execution.isolation.strategy", value = "THREAD"),
+            @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "4000"),
+            @HystrixProperty(name = "circuitBreaker.requestVolumeThreshold", value = "10"),
+            @HystrixProperty(name = "circuitBreaker.errorThresholdPercentage", value = "50")
+    }, threadPoolProperties = {
+            @HystrixProperty(name = "coreSize", value = "1"),
+            @HystrixProperty(name = "maxQueueSize", value = "10"),
+            @HystrixProperty(name = "keepAliveTimeMinutes", value = "1000"),
+            @HystrixProperty(name = "queueSizeRejectionThreshold", value = "8"),
+            @HystrixProperty(name = "metrics.rollingStats.numBuckets", value = "12"),
+            @HystrixProperty(name = "metrics.rollingStats.timeInMilliseconds", value = "1500")
+    })
+    @Compensable(confirmMethod = "buyTicketsConfirm", cancelMethod = "buyTicketsCancel", transactionContextEditor = DubboTransactionContextEditor.class)
     @RequestMapping(value = "/buyTickets", method = RequestMethod.POST)
     public ResponseVO buyTickets(@RequestParam(name = "fieldId") int fieldId,
                                  @RequestParam(name = "soldSeats") String soldSeats,
@@ -81,6 +88,9 @@ public class OrderController {
         }
         log.info("用户已登录");
 
+        //获取订单号
+        String uuid = uidGenAPI.getUid()+"";
+
         String[] seatsArr = soldSeats.split(",");
         int[] seatsInt = new int[seatsArr.length];
         for (int i = 0; i < seatsArr.length; i++) {
@@ -96,7 +106,7 @@ public class OrderController {
         Future<Boolean> isNotSold = RpcContext.getContext().getFuture();
 
         // 创建座位订单
-        orderServiceAsyncAPI.createOrder(fieldId, seatsInt, Integer.parseInt(userId), seatsName);
+        orderServiceAsyncAPI.createOrder(uuid, fieldId, seatsInt, Integer.parseInt(userId), seatsName);
         Future<OrderInfoVO> orderInfoVOFuture = RpcContext.getContext().getFuture();
 
         log.info("用户创建订单");
@@ -108,6 +118,16 @@ public class OrderController {
             return ResponseVO.success(orderInfoVOFuture.get());
         }
     }
+
+    public ResponseVO buyTicketsConfirm(int fieldId, String soldSeats, String seatsName) {
+        log.info("整个下订单事务提交");
+        return null;
+    }
+    public ResponseVO buyTicketsCancel(int fieldId, String soldSeats, String seatsName) {
+        log.info("整个下订单事务取消");
+        return null;
+    }
+
 
     @RequestMapping(value = "/getOrderInfo", method = RequestMethod.POST)
     public ResponseVO getOrderInfo(

@@ -1,6 +1,7 @@
 package com.stylefeng.guns.api.order;
 
 import com.stylefeng.guns.api.order.vo.OrderInfoVO;
+import org.mengyun.tcctransaction.api.Compensable;
 
 /**
  * @author Harson
@@ -14,6 +15,7 @@ public interface OrderServiceAsyncAPI {
      * @param seatIds
      * @return
      */
+    @Compensable
     boolean isTrueSeats(int fieldId, int [] seatIds);
 
     /**
@@ -22,6 +24,7 @@ public interface OrderServiceAsyncAPI {
      * @param seatIds
      * @return
      */
+    @Compensable
     boolean isNotSold(int fieldId, int [] seatIds);
 
     /**
@@ -31,5 +34,18 @@ public interface OrderServiceAsyncAPI {
      * @param userId
      * @return
      */
-    OrderInfoVO createOrder(int fieldId, int [] seatIds, int userId, String seatsName);
+    @Compensable
+    OrderInfoVO createOrder(String uuid, int fieldId, int [] seatIds, int userId, String seatsName);
+
+    boolean seatConfirm(int fieldId, int[] seatIds);
+
+    boolean seatCancel(int fieldId, int[] seatIds);
+
+    boolean notSoldConfirm(int fieldId, int[] seatIds);
+
+    boolean notSoldCancel(int fieldId, int[] seatIds);
+
+    OrderInfoVO orderConfirm(String uuid, int fieldId, int[] seatIds, int userId, String seatsName);
+
+    OrderInfoVO orderCancel(String uuid, int fieldId, int[] seatIds, int userId, String seatsName);
 }
