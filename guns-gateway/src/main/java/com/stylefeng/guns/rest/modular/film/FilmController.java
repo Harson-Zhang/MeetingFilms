@@ -10,6 +10,8 @@ import com.stylefeng.guns.rest.modular.film.vo.FilmConditionVO;
 import com.stylefeng.guns.rest.modular.film.vo.FilmIndexVo;
 import com.stylefeng.guns.rest.modular.film.vo.FilmRequestVO;
 import com.stylefeng.guns.rest.modular.vo.ResponseVO;
+import lombok.extern.slf4j.Slf4j;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,32 +20,45 @@ import java.util.concurrent.Future;
 
 @RestController
 @RequestMapping("/film/")
+@Slf4j
 public class FilmController {
     private static final String IMG_PRE = "http://img.meetingshop.cn/";
 
-    @Reference(interfaceClass = FilmServiceAPI.class, check = false)
+    @Reference(interfaceClass = FilmServiceAPI.class, check = false, filter = "tracing", timeout = 2000)
     FilmServiceAPI filmServiceAPI;
 
-    @Reference(interfaceClass = FilmServiceAsynAPI.class, check = false, async = true)
+    @Reference(interfaceClass = FilmServiceAsynAPI.class, check = false, async = true, filter = "tracing", timeout = 2000)
     FilmServiceAsynAPI filmServiceAsynAPI;
 
     @RequestMapping(value = "getIndex", method = RequestMethod.GET)
     public ResponseVO getIndex() {
-        FilmIndexVo indexVo = new FilmIndexVo();
-
+        long start = System.currentTimeMillis();
         //获取banner信息
-        indexVo.setBanners(filmServiceAPI.getBanners());
+        Future<List<BannerVo>> bannerListFuture = RpcContext.getContext().asyncCall(()->filmServiceAsynAPI.getBanners());
         //获取正在热映的电影
-        indexVo.setHotFilms(filmServiceAPI.getHotFilms(true, 10));
+        Future<FilmVo> hotFilmsFuture = RpcContext.getContext().asyncCall(()->filmServiceAsynAPI.getHotFilms(true, 10));
         //即将上映的电影
-        indexVo.setSoonFilms(filmServiceAPI.getSoonFilms(true, 10));
+        Future<FilmVo> soonFilmFuture = RpcContext.getContext().asyncCall(() -> filmServiceAsynAPI.getSoonFilms(true, 10));
         //票房排行榜
-        indexVo.setBoxRanking(filmServiceAPI.getBoxRanking());
-        //获我受欢迎的榜单
-        indexVo.setExpectRanking(filmServiceAPI.getExpectRanking());
+        Future<List<FilmInfoVo>> boxRankingFuture = RpcContext.getContext().asyncCall(() -> filmServiceAsynAPI.getBoxRanking());
+        //获取受欢迎的榜单
+        Future<List<FilmInfoVo>> expectRankingFuture = RpcContext.getContext().asyncCall(() -> filmServiceAsynAPI.getExpectRanking());
         //获取Top100的前10
-        indexVo.setTop100(filmServiceAPI.getTop());
+        Future<List<FilmInfoVo>> topFuture = RpcContext.getContext().asyncCall(() -> filmServiceAsynAPI.getTop());
 
+        FilmIndexVo indexVo = new FilmIndexVo();
+        try {
+            indexVo.setBanners(bannerListFuture.get());
+            indexVo.setHotFilms(hotFilmsFuture.get());
+            indexVo.setSoonFilms(soonFilmFuture.get());
+            indexVo.setBoxRanking(boxRankingFuture.get());
+            indexVo.setExpectRanking(expectRankingFuture.get());
+            indexVo.setTop100(topFuture.get());
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("FutureTask获取失败：{}", e.getMessage());
+            e.printStackTrace();
+        }
+        log.info("获取首页数据耗时：{}ms", System.currentTimeMillis()-start);
         return ResponseVO.success(indexVo, IMG_PRE);
     }
 
