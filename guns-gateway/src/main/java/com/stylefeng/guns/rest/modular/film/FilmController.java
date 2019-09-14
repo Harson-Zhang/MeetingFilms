@@ -11,23 +11,22 @@ import com.stylefeng.guns.rest.modular.film.vo.FilmIndexVo;
 import com.stylefeng.guns.rest.modular.film.vo.FilmRequestVO;
 import com.stylefeng.guns.rest.modular.vo.ResponseVO;
 import lombok.extern.slf4j.Slf4j;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+@Slf4j
 @RestController
 @RequestMapping("/film/")
-@Slf4j
 public class FilmController {
     private static final String IMG_PRE = "http://img.meetingshop.cn/";
 
-    @Reference(interfaceClass = FilmServiceAPI.class, check = false, filter = "tracing", timeout = 2000)
+    @Reference(interfaceClass = FilmServiceAPI.class, check = false)
     FilmServiceAPI filmServiceAPI;
 
-    @Reference(interfaceClass = FilmServiceAsynAPI.class, check = false, async = true, filter = "tracing", timeout = 2000)
+    @Reference(interfaceClass = FilmServiceAsynAPI.class, check = false, async = true)
     FilmServiceAsynAPI filmServiceAsynAPI;
 
     @RequestMapping(value = "getIndex", method = RequestMethod.GET)

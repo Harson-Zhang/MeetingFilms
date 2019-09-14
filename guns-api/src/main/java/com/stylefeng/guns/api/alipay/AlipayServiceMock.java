@@ -16,7 +16,7 @@ public class AlipayServiceMock implements AlipayServiceAPI {
     public PayResultVO getPayResult(String orderId) {
         PayResultVO payResultVO = new PayResultVO();
         payResultVO.setOrderId(orderId);
-        payResultVO.setOrderMsg("Mock！！查询支付失败！");
+        payResultVO.setOrderMsg("查询支付结果失败(Mock)！");
         return payResultVO;
     }
 }
